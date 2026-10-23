@@ -37,6 +37,7 @@
 #include <public/inetchannelinfo.h>
 #include <public/iserver.h>
 
+#include "core/engine_vfuncs.h"
 #include "core/log.h"
 #include "core/timer_system.h"
 #include "scripting/callback_manager.h"
@@ -440,7 +441,7 @@ bool CPlayer::IsAuthStringValidated() const
 {
     if (!IsFakeClient())
     {
-        return globals::engine->IsClientFullyAuthenticated(m_slot);
+        return engine_vfuncs::IsClientFullyAuthenticated(m_slot);
     }
     return false;
 }
@@ -505,10 +506,13 @@ void PlayerManager::RunAuthChecks()
         {
             if (m_players[i].IsAuthorized() || m_players[i].IsFakeClient()) continue;
 
-            if (globals::engine->IsClientFullyAuthenticated(i))
+            if (engine_vfuncs::IsClientFullyAuthenticated(i))
             {
+                auto steamId = engine_vfuncs::GetClientSteamID(i);
+                if (!steamId) continue;
+
                 m_players[i].Authorize();
-                m_players[i].SetSteamId(globals::engine->GetClientSteamID(i));
+                m_players[i].SetSteamId(steamId);
                 OnAuthorized(&m_players[i]);
             }
         }

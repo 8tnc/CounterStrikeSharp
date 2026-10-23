@@ -17,6 +17,7 @@
 #include <eiface.h>
 #include <networksystem/inetworkmessages.h>
 
+#include "core/engine_vfuncs.h"
 #include "core/log.h"
 #include "core/managers/con_command_manager.h"
 #include "core/managers/player_manager.h"
@@ -168,7 +169,7 @@ static void SetFakeClientConVarValue(ScriptContext& script_context)
     auto convarName = script_context.GetArgument<const char*>(1);
     auto convarValue = script_context.GetArgument<const char*>(2);
 
-    globals::engine->SetFakeClientConVarValue(CPlayerSlot(playerSlot), convarName, convarValue);
+    engine_vfuncs::SetFakeClientConVarValue(CPlayerSlot(playerSlot), convarName, convarValue);
 }
 
 ConVarData* FindConVar(ScriptContext& script_context)
