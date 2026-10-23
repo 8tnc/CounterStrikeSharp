@@ -35,10 +35,10 @@
 
 #include "core/global_listener.h"
 #include "core/globals.h"
+#include "core/hooks.h"
 
 class CBaseEntity;
 class INetChannelInfo;
-class IPlayerInfo;
 struct edict_t;
 
 namespace counterstrikesharp {
@@ -75,7 +75,6 @@ class CPlayer
     void Initialize(const char* name, const char* ip, CPlayerSlot slot);
     void Connect();
     void Disconnect();
-    IPlayerInfo* GetPlayerInfo() const;
     bool WasCountedAsInGame() const;
     int GetUserId();
     bool IsAuthStringValidated() const;
@@ -92,23 +91,10 @@ class CPlayer
     //    void PrintToChat(const char *message);
     //    void PrintToHint(const char *message);
     //    void PrintToCenter(const char *message);
-    QAngle GetAbsAngles() const;
-    Vector GetAbsOrigin() const;
-    bool IsAlive() const;
     bool IsInGame() const;
     void Kick(const char* kickReason);
-    const char* GetWeaponName() const;
-    void ChangeTeam(int team) const;
-    int GetTeam() const;
-    int GetArmor() const;
-    int GetFrags() const;
-    int GetDeaths() const;
     const char* GetKeyValue(const char* key) const;
-    Vector GetMaxSize() const;
-    Vector GetMinSize() const;
-    int GetMaxHealth() const;
     const char* GetIpAddress() const;
-    const char* GetModelName() const;
     int GetUserId() const;
     float GetTimeConnected() const;
     void SetListen(CPlayerSlot slot, ListenOverride listen);
@@ -118,7 +104,6 @@ class CPlayer
 
   public:
     std::string m_name;
-    IPlayerInfo* m_info = nullptr;
     std::string m_auth_id;
     bool m_is_connected = false;
     bool m_is_fake_client = false;
@@ -138,28 +123,49 @@ class CPlayer
 
 class PlayerManager : public GlobalClass
 {
+  private:
+    HookSet m_hooks;
+
     friend class CPlayer;
 
   public:
     PlayerManager();
     void OnStartup() override;
     void OnAllInitialized() override;
-    bool
-    OnClientConnect(CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, bool unk1, CBufferString* pRejectReason);
-    bool OnClientConnect_Post(
-        CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, bool unk1, CBufferString* pRejectReason);
-    void OnClientPutInServer(CPlayerSlot slot, char const* pszName, int type, uint64 xuid);
-    void
-    OnClientDisconnect(CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID);
-    void OnClientDisconnect_Post(
-        CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID) const;
-    void OnClientVoice(CPlayerSlot slot) const;
+    KHook::Return<bool> OnClientConnect(IServerGameClients* hookThis,
+                                        CPlayerSlot slot,
+                                        const char* pszName,
+                                        uint64 xuid,
+                                        const char* pszNetworkID,
+                                        bool unk1,
+                                        CBufferString* pRejectReason);
+    KHook::Return<bool> OnClientConnect_Post(IServerGameClients* hookThis,
+                                             CPlayerSlot slot,
+                                             const char* pszName,
+                                             uint64 xuid,
+                                             const char* pszNetworkID,
+                                             bool unk1,
+                                             CBufferString* pRejectReason);
+    KHook::Return<void> OnClientPutInServer(IServerGameClients* hookThis, CPlayerSlot slot, char const* pszName, int type, uint64 xuid);
+    KHook::Return<void> OnClientDisconnect(IServerGameClients* hookThis,
+                                           CPlayerSlot slot,
+                                           ENetworkDisconnectionReason reason,
+                                           const char* pszName,
+                                           uint64 xuid,
+                                           const char* pszNetworkID);
+    KHook::Return<void> OnClientDisconnect_Post(IServerGameClients* hookThis,
+                                                CPlayerSlot slot,
+                                                ENetworkDisconnectionReason reason,
+                                                const char* pszName,
+                                                uint64 xuid,
+                                                const char* pszNetworkID);
+    KHook::Return<void> OnClientVoice(IServerGameClients* hookThis, CPlayerSlot slot);
     void OnAuthorized(CPlayer* player) const;
     void OnServerActivate(edict_t* pEdictList, int edictCount, int clientMax) const;
     void OnThink(bool last_tick) const;
     void OnShutdown() override;
     void OnLevelEnd() override;
-    void OnClientCommand(CPlayerSlot slot, const CCommand& args) const;
+    KHook::Return<void> OnClientCommand(IServerGameClients* hookThis, CPlayerSlot slot, const CCommand& args);
     int ListenClient() const;
     void RunAuthChecks();
 

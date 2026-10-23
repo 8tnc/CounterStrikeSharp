@@ -31,6 +31,8 @@ CBaseGameSystemFactory** CBaseGameSystemFactory::sm_pFirst = nullptr;
 CGameSystem g_GameSystem;
 IGameSystemFactory* CGameSystem::sm_Factory = nullptr;
 
+IEntityResourceManifest* m_exportResourceManifest = nullptr;
+
 // This mess is needed to get the pointer to sm_pFirst so we can insert game systems
 bool InitGameSystems()
 {
@@ -65,12 +67,14 @@ GS_EVENT_MEMBER(CGameSystem, BuildGameSessionManifest)
 
     CSSHARP_CORE_INFO("CGameSystem::BuildGameSessionManifest");
 
+    m_exportResourceManifest = pResourceManifest;
+
     counterstrikesharp::globals::serverManager.OnPrecacheResources(pResourceManifest);
 }
 
 GS_EVENT_MEMBER(CGameSystem, ServerPreEntityThink)
 {
-    VPROF_BUDGET("CS#::CGameSystem::ServerPreEntityThink", "CS# On Frame");
+    // VPROF_BUDGET("CS#::CGameSystem::ServerPreEntityThink", "CS# On Frame");
     auto callback = counterstrikesharp::globals::serverManager.on_server_pre_entity_think;
 
     if (callback && callback->GetFunctionCount())
@@ -88,7 +92,7 @@ GS_EVENT_MEMBER(CGameSystem, ServerPreEntityThink)
 
 GS_EVENT_MEMBER(CGameSystem, ServerPostEntityThink)
 {
-    VPROF_BUDGET("CS#::CGameSystem::ServerPostEntityThink", "CS# On Frame");
+    // VPROF_BUDGET("CS#::CGameSystem::ServerPostEntityThink", "CS# On Frame");
     auto callback = counterstrikesharp::globals::serverManager.on_server_post_entity_think;
 
     if (callback && callback->GetFunctionCount())
