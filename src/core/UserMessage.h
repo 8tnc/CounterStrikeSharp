@@ -19,6 +19,7 @@
 #include <networksystem/inetworkmessages.h>
 
 #include "core/globals.h"
+#include "core/network_messages_compat.h"
 #include "log.h"
 #include "networkbasetypes.pb.h"
 
@@ -104,20 +105,26 @@ class UserMessage
     UserMessage(std::string msgName)
     {
         manuallyAllocated = true;
-        this->msgSerializable = globals::networkMessages->FindNetworkMessagePartial(msgName.c_str());
+        this->msgSerializable = netmessages::FindNetworkMessagePartial(msgName.c_str());
         if (!this->msgSerializable) return;
 
-        this->msg = this->msgSerializable->AllocateMessage()->ToPB<protobuf::Message>();
+        auto* allocated = netmessages::AllocateMessage(this->msgSerializable);
+        if (!allocated) return;
+
+        this->msg = allocated->ToPB<protobuf::Message>();
         this->recipientMask = new uint64(0);
     }
 
     UserMessage(int msgId)
     {
         manuallyAllocated = true;
-        this->msgSerializable = globals::networkMessages->FindNetworkMessageById(msgId);
+        this->msgSerializable = netmessages::FindNetworkMessageById(msgId);
         if (!this->msgSerializable) return;
 
-        this->msg = this->msgSerializable->AllocateMessage()->ToPB<protobuf::Message>();
+        auto* allocated = netmessages::AllocateMessage(this->msgSerializable);
+        if (!allocated) return;
+
+        this->msg = allocated->ToPB<protobuf::Message>();
         this->recipientMask = new uint64(0);
     }
 

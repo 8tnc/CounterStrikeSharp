@@ -666,7 +666,7 @@ static void PbGetDebugString(ScriptContext& scriptContext)
 static void UserMessageFindMessageIdByName(ScriptContext& scriptContext)
 {
     auto messageName = scriptContext.GetArgument<const char*>(0);
-    auto message = globals::networkMessages->FindNetworkMessagePartial(messageName);
+    auto message = netmessages::FindNetworkMessagePartial(messageName);
 
     if (message == nullptr)
     {
@@ -674,7 +674,7 @@ static void UserMessageFindMessageIdByName(ScriptContext& scriptContext)
         return;
     }
 
-    scriptContext.SetResult(message->GetNetMessageInfo()->m_MessageId);
+    scriptContext.SetResult(netmessages::GetMessageId(message));
 }
 
 static void UserMessageCreate(ScriptContext& scriptContext)
@@ -790,7 +790,7 @@ static void UserMessageGetMessageName(ScriptContext& scriptContext)
         return;
     }
 
-    scriptContext.SetResult(message->GetSerializableMessage()->GetUnscopedName());
+    scriptContext.SetResult(netmessages::GetMessageName(message->GetSerializableMessage()));
 }
 
 static void UserMessageGetMessageTypeName(ScriptContext& scriptContext)
