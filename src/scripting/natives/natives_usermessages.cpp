@@ -666,7 +666,7 @@ static void PbGetDebugString(ScriptContext& scriptContext)
 static void UserMessageFindMessageIdByName(ScriptContext& scriptContext)
 {
     auto messageName = scriptContext.GetArgument<const char*>(0);
-    auto message = netmessages::FindNetworkMessagePartial(messageName);
+    auto message = globals::networkMessages->FindNetworkMessagePartial(messageName);
 
     if (message == nullptr)
     {
@@ -674,7 +674,7 @@ static void UserMessageFindMessageIdByName(ScriptContext& scriptContext)
         return;
     }
 
-    scriptContext.SetResult(netmessages::GetMessageId(message));
+    scriptContext.SetResult(message->GetMessageId());
 }
 
 static void UserMessageCreate(ScriptContext& scriptContext)
@@ -746,7 +746,7 @@ static void UserMessageSend(ScriptContext& scriptContext)
     {
         // Bypass the exact virtual slot that UserMessageManager hooks. Calling
         // the recipient-filter overload can dispatch back through that slot.
-        static void (IGameEventSystem::*PostEventAbstract)(CSplitScreenSlot, bool, int, const uint64*, INetworkMessageInternal*,
+        static void (IGameEventSystem::*PostEventAbstract)(CSplitScreenSlot, bool, int, const uint64*, NetMessageInfo_t*,
                                                            const CNetMessage*, unsigned long, NetChannelBufType_t) =
             &IGameEventSystem::PostEventAbstract;
         KHook::CallOriginal(PostEventAbstract, globals::gameEventSystem, CSplitScreenSlot(0), false, ABSOLUTE_PLAYER_LIMIT,
@@ -790,7 +790,7 @@ static void UserMessageGetMessageName(ScriptContext& scriptContext)
         return;
     }
 
-    scriptContext.SetResult(netmessages::GetMessageName(message->GetSerializableMessage()));
+    scriptContext.SetResult(message->GetSerializableMessage()->GetName());
 }
 
 static void UserMessageGetMessageTypeName(ScriptContext& scriptContext)

@@ -19,7 +19,6 @@
 #include <networksystem/inetworkmessages.h>
 
 #include "core/globals.h"
-#include "core/network_messages_compat.h"
 #include "log.h"
 #include "networkbasetypes.pb.h"
 
@@ -72,7 +71,6 @@ using namespace google;
         return false;                                             \
     };
 
-class INetworkMessageInternal;
 namespace google::protobuf {
 class Message;
 }
@@ -96,7 +94,7 @@ static inline size_t SafeStrcpy(char* dest, size_t maxlength, const char* src)
 class UserMessage
 {
   public:
-    UserMessage(INetworkMessageInternal* msgSerializable, const CNetMessage* message, int nRecipientCount, uint64* recipientMask)
+    UserMessage(NetMessageInfo_t* msgSerializable, const CNetMessage* message, int nRecipientCount, uint64* recipientMask)
         : msgSerializable(msgSerializable), nRecipientCount(nRecipientCount), recipientMask(recipientMask),
           msg(const_cast<CNetMessage*>(message)->ToPB<protobuf::Message>())
     {
@@ -105,26 +103,20 @@ class UserMessage
     UserMessage(std::string msgName)
     {
         manuallyAllocated = true;
-        this->msgSerializable = netmessages::FindNetworkMessagePartial(msgName.c_str());
+        this->msgSerializable = globals::networkMessages->FindNetworkMessagePartial(msgName.c_str());
         if (!this->msgSerializable) return;
 
-        auto* allocated = netmessages::AllocateMessage(this->msgSerializable);
-        if (!allocated) return;
-
-        this->msg = allocated->ToPB<protobuf::Message>();
+        this->msg = this->msgSerializable->AllocateMessage()->ToPB<protobuf::Message>();
         this->recipientMask = new uint64(0);
     }
 
     UserMessage(int msgId)
     {
         manuallyAllocated = true;
-        this->msgSerializable = netmessages::FindNetworkMessageById(msgId);
+        this->msgSerializable = globals::networkMessages->FindNetworkMessageById(msgId);
         if (!this->msgSerializable) return;
 
-        auto* allocated = netmessages::AllocateMessage(this->msgSerializable);
-        if (!allocated) return;
-
-        this->msg = allocated->ToPB<protobuf::Message>();
+        this->msg = this->msgSerializable->AllocateMessage()->ToPB<protobuf::Message>();
         this->recipientMask = new uint64(0);
     }
 
@@ -137,13 +129,13 @@ class UserMessage
     int GetMessageID();
     bool HasField(std::string fieldName);
     const CNetMessagePB<google::protobuf::Message>* GetProtobufMessage();
-    INetworkMessageInternal* GetSerializableMessage() { return msgSerializable; }
+    NetMessageInfo_t* GetSerializableMessage() { return msgSerializable; }
     uint64* GetRecipientMask() { return recipientMask; }
     bool IsManuallyAllocated() { return manuallyAllocated; }
 
   private:
     CNetMessagePB<google::protobuf::Message>* msg = nullptr;
-    INetworkMessageInternal* msgSerializable = nullptr;
+    NetMessageInfo_t* msgSerializable = nullptr;
     int nRecipientCount = 0;
     uint64* recipientMask = nullptr;
     bool manuallyAllocated = false;
